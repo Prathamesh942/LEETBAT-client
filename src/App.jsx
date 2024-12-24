@@ -65,7 +65,7 @@ function App() {
 
     // Apply sorting
     filtered.sort((a, b) => {
-      if (sortOrder === "asc") {
+      if (sortOrder != "asc") {
         return new Date(a.timestamp) - new Date(b.timestamp); // Oldest first
       } else {
         return new Date(b.timestamp) - new Date(a.timestamp); // Newest first
