@@ -9,6 +9,7 @@ function App() {
   const [selectedTopic, setSelectedTopic] = useState("");
   const [selectedDifficulty, setSelectedDifficulty] = useState("");
   const [sortOrder, setSortOrder] = useState("desc");
+  const [groupByDate, setGroupByDate] = useState(false); // State for grouping by date
 
   // Statistics
   const [difficultyStats, setDifficultyStats] = useState({
@@ -65,7 +66,7 @@ function App() {
 
     // Apply sorting
     filtered.sort((a, b) => {
-      if (sortOrder === "asc") {
+      if (sortOrder !== "asc") {
         return new Date(a.timestamp) - new Date(b.timestamp); // Oldest first
       } else {
         return new Date(b.timestamp) - new Date(a.timestamp); // Newest first
@@ -89,18 +90,14 @@ function App() {
   };
 
   // Group data by date
-  const groupDataByDate = (data) => {
-    return data.reduce((acc, note) => {
+  const groupDataByDate = () => {
+    return filteredData.reduce((acc, note) => {
       const date = new Date(note.timestamp).toLocaleDateString();
-      if (!acc[date]) {
-        acc[date] = [];
-      }
+      if (!acc[date]) acc[date] = [];
       acc[date].push(note);
       return acc;
     }, {});
   };
-
-  const groupedData = groupDataByDate(filteredData);
 
   return (
     <div className="min-h-screen bg-gray-900 py-10 px-5">
@@ -108,17 +105,25 @@ function App() {
         <img src="/batman.png" className=" w-[150px]" alt="" />
       </h1>
 
-      {/* Difficulty Stats at the top */}
-      <div className="flex  p-4 rounded-lg mb-6  gap-10">
-        <span className="text-gray-300 font-bold">
-          Easy: {difficultyStats.easy}
-        </span>
-        <span className="text-gray-300 font-bold">
-          Medium: {difficultyStats.medium}
-        </span>
-        <span className="text-gray-300 font-bold">
-          Hard: {difficultyStats.hard}
-        </span>
+      {/* Difficulty Stats and Toggle Button */}
+      <div className="flex justify-between items-center mb-6">
+        <div className="flex gap-4">
+          <span className="text-gray-300 font-bold">
+            Easy: {difficultyStats.easy}
+          </span>
+          <span className="text-gray-300 font-bold">
+            Medium: {difficultyStats.medium}
+          </span>
+          <span className="text-gray-300 font-bold">
+            Hard: {difficultyStats.hard}
+          </span>
+        </div>
+        <button
+          onClick={() => setGroupByDate(!groupByDate)}
+          className="bg-yellow-500 text-gray-900 px-4 py-2 rounded-lg font-bold"
+        >
+          {groupByDate ? "Ungroup by Date" : "Group by Date"}
+        </button>
       </div>
 
       {/* Filters */}
@@ -166,76 +171,141 @@ function App() {
         </div>
       </div>
 
-      {/* Notes Table */}
-      <div className="overflow-x-auto">
-        {Object.keys(groupedData).map((date) => (
-          <div key={date} className="mb-8">
-            <h2 className="text-xl font-bold text-yellow-500 mb-4">{date}</h2>
-            <table className="min-w-full bg-gray-800 text-gray-300 rounded-lg shadow-lg mb-4">
-              <thead>
-                <tr>
-                  <th className="p-4 border-b border-gray-700 ">#</th>
-                  <th className="p-4 border-b border-gray-700">
-                    Question Name
-                  </th>
-                  <th className="p-4 border-b border-gray-700">Note</th>
-                  <th className="p-4 border-b border-gray-700">Topics</th>
-                  <th className="p-4 border-b border-gray-700">
-                    Question Number
-                  </th>
-                  <th className="p-4 border-b border-gray-700">Difficulty</th>
-                  <th className="p-4 border-b border-gray-700">Timestamp</th>
-                  <th className="p-4 border-b border-gray-700">URL</th>
-                </tr>
-              </thead>
-              <tbody>
-                {groupedData[date].map((note, index) => (
-                  <tr key={note._id} className="hover:bg-gray-700">
-                    <td className="p-4">{index + 1}</td>
-                    <td className="p-4">{note.questionName}</td>
-                    <td className="p-4">{note.note}</td>
-                    <td className="p-4">
-                      <div className="flex flex-wrap gap-2">
-                        {note.questionTopics.map((topic, i) => (
-                          <span
-                            key={i}
-                            className="bg-gray-700 text-gray-300 px-2 py-1 rounded-full text-sm"
-                          >
-                            {topic}
-                          </span>
-                        ))}
-                      </div>
-                    </td>
-                    <td className="p-4">{note.questionNumber}</td>
-                    <td className="p-4">
-                      <span
-                        className={`p-2 rounded-full text-white ${getDifficultyStyle(
-                          note.difficulty
-                        )}`}
-                      >
-                        {note.difficulty || "N/A"}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      {new Date(note.timestamp).toLocaleString()}
-                    </td>
-                    <td className="p-4">
-                      <a
-                        href={note.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-gray-300 hover:text-yellow-500"
-                      >
-                        View Question
-                      </a>
-                    </td>
+      {/* Notes Table or Grouped Data */}
+      {groupByDate ? (
+        <div>
+          {Object.entries(groupDataByDate()).map(([date, notes]) => (
+            <div key={date} className="mb-6">
+              <h2 className="text-xl font-bold text-gray-400 mb-4">{date}</h2>
+              <table className="min-w-full bg-gray-800 text-gray-300 rounded-lg shadow-lg">
+                <thead>
+                  <tr>
+                    <th className="p-4 border-b border-gray-700">#</th>
+                    <th className="p-4 border-b border-gray-700">
+                      Question Name
+                    </th>
+                    <th className="p-4 border-b border-gray-700">Note</th>
+                    <th className="p-4 border-b border-gray-700">Topics</th>
+                    <th className="p-4 border-b border-gray-700">
+                      Question Number
+                    </th>
+                    <th className="p-4 border-b border-gray-700">Difficulty</th>
+                    <th className="p-4 border-b border-gray-700">Timestamp</th>
+                    <th className="p-4 border-b border-gray-700">URL</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ))}
-      </div>
+                </thead>
+                <tbody>
+                  {notes.map((note, index) => (
+                    <tr key={note._id} className="hover:bg-gray-700">
+                      <td className="p-4">{index + 1}</td>
+                      <td className="p-4">{note.questionName}</td>
+                      <td className="p-4">{note.note}</td>
+                      <td className="p-4">
+                        <div className="flex flex-wrap gap-2">
+                          {note.questionTopics.map((topic, i) => (
+                            <span
+                              key={i}
+                              className="bg-gray-700 text-gray-300 px-2 py-1 rounded-full text-sm"
+                            >
+                              {topic}
+                            </span>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="p-4">{note.questionNumber}</td>
+                      <td className="p-4">
+                        <span
+                          className={`p-2 rounded-full text-white ${getDifficultyStyle(
+                            note.difficulty
+                          )}`}
+                        >
+                          {note.difficulty || "N/A"}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        {new Date(note.timestamp).toLocaleString()}
+                      </td>
+                      <td className="p-4">
+                        <a
+                          href={note.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-gray-300 hover:text-yellow-500"
+                        >
+                          View Question
+                        </a>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="min-w-full bg-gray-800 text-gray-300 rounded-lg shadow-lg">
+            <thead>
+              <tr>
+                <th className="p-4 border-b border-gray-700">#</th>
+                <th className="p-4 border-b border-gray-700">Question Name</th>
+                <th className="p-4 border-b border-gray-700">Note</th>
+                <th className="p-4 border-b border-gray-700">Topics</th>
+                <th className="p-4 border-b border-gray-700">
+                  Question Number
+                </th>
+                <th className="p-4 border-b border-gray-700">Difficulty</th>
+                <th className="p-4 border-b border-gray-700">Timestamp</th>
+                <th className="p-4 border-b border-gray-700">URL</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredData.map((note, index) => (
+                <tr key={note._id} className="hover:bg-gray-700">
+                  <td className="p-4">{index + 1}</td>
+                  <td className="p-4">{note.questionName}</td>
+                  <td className="p-4">{note.note}</td>
+                  <td className="p-4">
+                    <div className="flex flex-wrap gap-2">
+                      {note.questionTopics.map((topic, i) => (
+                        <span
+                          key={i}
+                          className="bg-gray-700 text-gray-300 px-2 py-1 rounded-full text-sm"
+                        >
+                          {topic}
+                        </span>
+                      ))}
+                    </div>
+                  </td>
+                  <td className="p-4">{note.questionNumber}</td>
+                  <td className="p-4">
+                    <span
+                      className={`p-2 rounded-full text-white ${getDifficultyStyle(
+                        note.difficulty
+                      )}`}
+                    >
+                      {note.difficulty || "N/A"}
+                    </span>
+                  </td>
+                  <td className="p-4">
+                    {new Date(note.timestamp).toLocaleString()}
+                  </td>
+                  <td className="p-4">
+                    <a
+                      href={note.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-gray-300 hover:text-yellow-500"
+                    >
+                      View Question
+                    </a>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
