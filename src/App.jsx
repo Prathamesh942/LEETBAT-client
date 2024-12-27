@@ -65,7 +65,7 @@ function App() {
 
     // Apply sorting
     filtered.sort((a, b) => {
-      if (sortOrder != "asc") {
+      if (sortOrder === "asc") {
         return new Date(a.timestamp) - new Date(b.timestamp); // Oldest first
       } else {
         return new Date(b.timestamp) - new Date(a.timestamp); // Newest first
@@ -87,6 +87,20 @@ function App() {
         return "bg-gray-600 ";
     }
   };
+
+  // Group data by date
+  const groupDataByDate = (data) => {
+    return data.reduce((acc, note) => {
+      const date = new Date(note.timestamp).toLocaleDateString();
+      if (!acc[date]) {
+        acc[date] = [];
+      }
+      acc[date].push(note);
+      return acc;
+    }, {});
+  };
+
+  const groupedData = groupDataByDate(filteredData);
 
   return (
     <div className="min-h-screen bg-gray-900 py-10 px-5">
@@ -154,64 +168,73 @@ function App() {
 
       {/* Notes Table */}
       <div className="overflow-x-auto">
-        <table className="min-w-full bg-gray-800 text-gray-300 rounded-lg shadow-lg ">
-          <thead className="">
-            <tr>
-              <th className="p-4 border-b border-gray-700 ">#</th>
-              <th className="p-4 border-b border-gray-700">Question Name</th>
-              <th className="p-4 border-b border-gray-700">Note</th>
-              <th className="p-4 border-b border-gray-700">Topics</th>
-              <th className="p-4 border-b border-gray-700">Question Number</th>
-              <th className="p-4 border-b border-gray-700">Difficulty</th>
-              <th className="p-4 border-b border-gray-700">Timestamp</th>
-              <th className="p-4 border-b border-gray-700">URL</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredData.map((note, index) => (
-              <tr key={note._id} className="hover:bg-gray-700">
-                <td className="p-4">{index + 1}</td>
-                <td className="p-4">{note.questionName}</td>
-                <td className="p-4">{note.note}</td>
-                <td className="p-4">
-                  <div className="flex flex-wrap gap-2">
-                    {note.questionTopics.map((topic, i) => (
+        {Object.keys(groupedData).map((date) => (
+          <div key={date} className="mb-8">
+            <h2 className="text-xl font-bold text-yellow-500 mb-4">{date}</h2>
+            <table className="min-w-full bg-gray-800 text-gray-300 rounded-lg shadow-lg mb-4">
+              <thead>
+                <tr>
+                  <th className="p-4 border-b border-gray-700 ">#</th>
+                  <th className="p-4 border-b border-gray-700">
+                    Question Name
+                  </th>
+                  <th className="p-4 border-b border-gray-700">Note</th>
+                  <th className="p-4 border-b border-gray-700">Topics</th>
+                  <th className="p-4 border-b border-gray-700">
+                    Question Number
+                  </th>
+                  <th className="p-4 border-b border-gray-700">Difficulty</th>
+                  <th className="p-4 border-b border-gray-700">Timestamp</th>
+                  <th className="p-4 border-b border-gray-700">URL</th>
+                </tr>
+              </thead>
+              <tbody>
+                {groupedData[date].map((note, index) => (
+                  <tr key={note._id} className="hover:bg-gray-700">
+                    <td className="p-4">{index + 1}</td>
+                    <td className="p-4">{note.questionName}</td>
+                    <td className="p-4">{note.note}</td>
+                    <td className="p-4">
+                      <div className="flex flex-wrap gap-2">
+                        {note.questionTopics.map((topic, i) => (
+                          <span
+                            key={i}
+                            className="bg-gray-700 text-gray-300 px-2 py-1 rounded-full text-sm"
+                          >
+                            {topic}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="p-4">{note.questionNumber}</td>
+                    <td className="p-4">
                       <span
-                        key={i}
-                        className="bg-gray-700 text-gray-300 px-2 py-1 rounded-full text-sm"
+                        className={`p-2 rounded-full text-white ${getDifficultyStyle(
+                          note.difficulty
+                        )}`}
                       >
-                        {topic}
+                        {note.difficulty || "N/A"}
                       </span>
-                    ))}
-                  </div>
-                </td>
-                <td className="p-4">{note.questionNumber}</td>
-                <td className="p-4">
-                  <span
-                    className={`p-2 rounded-full text-white ${getDifficultyStyle(
-                      note.difficulty
-                    )}`}
-                  >
-                    {note.difficulty || "N/A"}
-                  </span>
-                </td>
-                <td className="p-4">
-                  {new Date(note.timestamp).toLocaleString()}
-                </td>
-                <td className="p-4">
-                  <a
-                    href={note.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-gray-300 hover:text-yellow-500"
-                  >
-                    View Question
-                  </a>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                    </td>
+                    <td className="p-4">
+                      {new Date(note.timestamp).toLocaleString()}
+                    </td>
+                    <td className="p-4">
+                      <a
+                        href={note.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-gray-300 hover:text-yellow-500"
+                      >
+                        View Question
+                      </a>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ))}
       </div>
     </div>
   );
